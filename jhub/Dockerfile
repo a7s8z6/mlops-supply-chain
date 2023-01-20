@@ -16,6 +16,9 @@ RUN dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x
 COPY jupyterhub_config.py jupyterhub_config.sh /opt/app-root/etc/
 COPY .jupyter/jupyterhub_config.py .jupyter/jupyterhub_config.py
 
+# Copy singleuser profile customization
+COPY jupyterhub-singleuser-profiles /opt/app-root/lib/python3.8/site-packages
+
 # Copy helper scripts.
 COPY scripts/* /opt/app-root/bin/
 
@@ -28,13 +31,13 @@ RUN chown -R 1001:0 ${APP_ROOT} && \
 USER 1001
 # Install the dependencies
 RUN pip install -U pip setuptools wheel && \
-    pip install -r requirements.txt
+    pip install -r requirements.txt && \
+    pip install --no-index --find-links=jupyterhub-singleuser-profiles -r requirements.txt
 
 # COPY hack/oauthenticator/generic.py /opt/app-root/lib/python3.8/site-packages/oauthenticator/generic.py
 # COPY hack/singleuser_profiles/api.py /opt/app-root/lib/python3.8/site-packages/jupyterhub_singleuser_profiles/api.py
 
 # Copy and Install npm packages"
-COPY linux-x64-83_binding.node .
 RUN npm install -g configurable-http-proxy@4.5.4 node-sass@4.14.1
 
 # Run script to setup singleuser profile UI
@@ -50,3 +53,4 @@ RUN mkdir -p /opt/app-root/data
 RUN fix-permissions ${APP_ROOT} -P
 
 CMD [ "/opt/app-root/bin/run.sh" ]
+
